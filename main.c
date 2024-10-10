@@ -4,8 +4,20 @@
 #define HEIGHT 22
 #define VISIBLE_HEIGHT 20
 
+/*
+ * Struct representing state of each tetrino
+ * tetrino_index selects one of 8 tetrinos
+ */
+struct piece_state {
+    uint8_t tetrino_index;
+    int32_t offset_row;
+    int32_t offset_col;
+    int32_t rotation;
+};
+
 struct game_state {
     uint8_t board[WIDTH * HEIGHT];
+    struct piece_state piece;
 };
 
 uint8_t matrix_get(const uint8_t *values, uint8_t *test, int32_t width, int32_t row, int32_t col) {
