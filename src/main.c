@@ -9,9 +9,12 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 
+#include "color.h"
+
 #define WIDTH 10
 #define HEIGHT 22
 #define VISIBLE_HEIGHT 20
+#define GRID_SIZE 30
 
 #define CONSTRUCT_TETROMINO(data, side) {data, side}
 
@@ -155,6 +158,31 @@ void update_game(GameState *game, const InputState *input) {
             return update_game_play(game, input);
             break;
     }
+}
+
+void fill_rect(SDL_Renderer* renderer, int32_t x, int32_t y, int32_t width, int32_t height, Color color) {
+    SDL_Rect rect = {};
+    rect.x = x;
+    rect.y = y;
+    rect.w = width;
+    rect.h = height;
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+void draw_cell(SDL_Renderer *renderer, int32_t row, int32_t col, uint8_t value, int32_t offset_x, int32_t offset_y) {
+    Color base_color = BASE_COLORS[value];
+    Color light_color = LIGHT_COLORS[value];
+    Color dark_color = DARK_COLORS[value];
+
+    int32_t edge = GRID_SIZE / 8;
+
+    int32_t x = col * GRID_SIZE + offset_x;
+    int32_t y = row * GRID_SIZE + offset_y;
+
+    fill_rect(renderer, x, y, GRID_SIZE, GRID_SIZE, dark_color);
+    fill_rect(renderer, x + edge, y, GRID_SIZE - edge, GRID_SIZE - edge, light_color);
+    fill_rect(renderer, x + edge, y + edge, GRID_SIZE - edge, GRID_SIZE - edge, base_color);
 }
 
 void render_game(const GameState *game, SDL_Renderer *renderer) {
