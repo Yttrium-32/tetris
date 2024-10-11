@@ -137,7 +137,7 @@ void update_game_play(game_state *game, const input_state *input) {
         piece.rotation = (piece.rotation + 1) % 4;
     }
     if (check_piece_valid(&piece, game -> board, WIDTH, HEIGHT)) {
-        --piece.offset_col;
+        game->piece = piece;
     }
 }
 
