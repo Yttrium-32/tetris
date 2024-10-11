@@ -42,9 +42,9 @@ const tetrino TETRINOS[] = {
     construct_tetrino(TETRINO_3, 3),
 };
 
-enum game_phase {
+typedef enum {
     GAME_PHASE_PLAY
-};
+} game_phase;
 
 /*
  * Struct representing state of each tetrino
@@ -60,6 +60,7 @@ typedef struct {
 typedef struct {
     uint8_t board[WIDTH * HEIGHT];
     piece_state piece;
+    game_phase phase;
 } game_state ;
 
 typedef struct {
@@ -138,6 +139,14 @@ void update_game_play(game_state *game, const input_state *input) {
     }
     if (check_piece_valid(&piece, game -> board, WIDTH, HEIGHT)) {
         game->piece = piece;
+    }
+}
+
+void update_game(game_state *game, const input_state *input) {
+    switch (game->phase) {
+        case GAME_PHASE_PLAY:
+            return update_game_play(game, input);
+            break;
     }
 }
 
