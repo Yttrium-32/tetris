@@ -23,35 +23,35 @@
 typedef struct {
     const uint8_t *data;
     const int32_t side;
-} tetromino;
+} Tetromino;
 
-const uint8_t TETRINO_1[] = {
+const uint8_t TETROMINO_1[] = {
     0, 0, 0, 0,
     1, 1, 1, 1,
     0, 0, 0, 0,
     0, 0, 0, 0,
 };
 
-const uint8_t TETRINO_2[] = {
+const uint8_t TETROMINO_2[] = {
     2, 2,
     2, 2
 };
  
-const uint8_t TETRINO_3[] = {
+const uint8_t TETROMINO_3[] = {
     0, 0, 0,
     3, 3, 3,
     0, 3, 0
 };
 
-const tetromino TETRINOS[] = {
-    CONSTRUCT_TETROMINO(TETRINO_1, 4),
-    CONSTRUCT_TETROMINO(TETRINO_2, 2),
-    CONSTRUCT_TETROMINO(TETRINO_3, 3),
+const Tetromino TETROMINOS[] = {
+    CONSTRUCT_TETROMINO(TETROMINO_1, 4),
+    CONSTRUCT_TETROMINO(TETROMINO_2, 2),
+    CONSTRUCT_TETROMINO(TETROMINO_3, 3),
 };
 
 typedef enum {
     GAME_PHASE_PLAY
-} game_phase;
+} GamePhase;
 
 /*
  * Struct representing state of each tetromino
@@ -62,20 +62,20 @@ typedef struct {
     int32_t offset_row;
     int32_t offset_col;
     int32_t rotation;
-} piece_state;
+} PieceState;
 
 typedef struct {
     uint8_t board[WIDTH * HEIGHT];
-    piece_state piece;
-    game_phase phase;
-} game_state ;
+    PieceState piece;
+    GamePhase phase;
+} GameState ;
 
 typedef struct {
     int8_t dleft;
     int8_t dright;
     int8_t dup;
 
-} input_state;
+} InputState;
 
 uint8_t matrix_get(const uint8_t *values, int32_t width, int32_t row, int32_t col) {
     int32_t index = row * width + col;
@@ -87,7 +87,7 @@ void matrix_set(uint8_t *values, int32_t width, int32_t row, int32_t col, uint8_
     values[index] = value;
 }
 
-uint8_t tetromino_get(const tetromino *tetromino, int32_t row, int32_t col, int32_t rotation) {
+uint8_t tetromino_get(const Tetromino *tetromino, int32_t row, int32_t col, int32_t rotation) {
     int32_t side = tetromino -> side;
     switch (rotation) {
         case 0:
@@ -102,8 +102,8 @@ uint8_t tetromino_get(const tetromino *tetromino, int32_t row, int32_t col, int3
     return 0;
 }
 
-bool check_piece_valid(const piece_state *piece, const uint8_t *board, int32_t width, int32_t height) {
-    const tetromino *tetromino = &TETRINOS[piece->tetromino_index];
+bool check_piece_valid(const PieceState *piece, const uint8_t *board, int32_t width, int32_t height) {
+    const Tetromino *tetromino = &TETROMINOS[piece->tetromino_index];
     assert(tetromino);
 
     for (int32_t row = 0; row < height; ++row) {
@@ -133,8 +133,8 @@ bool check_piece_valid(const piece_state *piece, const uint8_t *board, int32_t w
     return true;
 }
 
-void update_game_play(game_state *game, const input_state *input) {
-    piece_state piece = game -> piece;
+void update_game_play(GameState *game, const InputState *input) {
+    PieceState piece = game -> piece;
     if (input -> dleft > 0) {
         --piece.offset_col;
     }
@@ -149,7 +149,7 @@ void update_game_play(game_state *game, const input_state *input) {
     }
 }
 
-void update_game(game_state *game, const input_state *input) {
+void update_game(GameState *game, const InputState *input) {
     switch (game->phase) {
         case GAME_PHASE_PLAY:
             return update_game_play(game, input);
@@ -157,7 +157,7 @@ void update_game(game_state *game, const input_state *input) {
     }
 }
 
-void render_game(const game_state *game, SDL_Renderer *renderer) {
+void render_game(const GameState *game, SDL_Renderer *renderer) {
 
 }
 
@@ -171,8 +171,8 @@ int main() {
             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    game_state game = {};
-    input_state input = {};
+    GameState game = {};
+    InputState input = {};
 
     bool quit = false;
     while (!quit) {
