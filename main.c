@@ -66,6 +66,21 @@ void matrix_set(uint8_t *values, int32_t width, int32_t row, int32_t col, uint8_
     values[index] = value;
 }
 
+uint8_t tetrino_get(tetrino *tetrino, int32_t row, int32_t col, int32_t rotation) {
+    int32_t side = tetrino -> side;
+    switch (rotation) {
+        case 0:
+            return tetrino -> data[row * side + col];
+        case 1:
+            return tetrino -> data[(side - col - 1) * side + row];
+        case 2:
+            return tetrino -> data[(side - row - 1) * side + (side - col - 1)];
+        case 3:
+            return tetrino -> data[col * side + (side - row - 1)];
+    }
+    return 0;
+}
+
 int main() {
     return 0;
 }
