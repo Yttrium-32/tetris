@@ -1,6 +1,10 @@
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_video.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#include <SDL2/SDL.h>
 
 #define WIDTH 10
 #define HEIGHT 22
@@ -151,5 +155,16 @@ void update_game(game_state *game, const input_state *input) {
 }
 
 int main() {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        return 1;
+    }
+    SDL_Window *window = SDL_CreateWindow("Tetris",
+            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+            400, 720,
+            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_Quit();
     return 0;
 }
