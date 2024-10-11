@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #define WIDTH 10
@@ -61,6 +63,9 @@ typedef struct {
 } game_state ;
 
 typedef struct {
+    int8_t dleft;
+    int8_t dright;
+    int8_t dup;
 
 } input_state;
 
@@ -74,7 +79,7 @@ void matrix_set(uint8_t *values, int32_t width, int32_t row, int32_t col, uint8_
     values[index] = value;
 }
 
-uint8_t tetrino_get(tetrino *tetrino, int32_t row, int32_t col, int32_t rotation) {
+uint8_t tetrino_get(const tetrino *tetrino, int32_t row, int32_t col, int32_t rotation) {
     int32_t side = tetrino -> side;
     switch (rotation) {
         case 0:
@@ -87,6 +92,53 @@ uint8_t tetrino_get(tetrino *tetrino, int32_t row, int32_t col, int32_t rotation
             return tetrino -> data[col * side + (side - row - 1)];
     }
     return 0;
+}
+
+bool check_piece_valid(const piece_state *piece, const uint8_t *board, int32_t width, int32_t height) {
+    const tetrino *tetrino = &TETRINOS[piece->tetrino_index];
+    assert(tetrino);
+
+    for (int32_t row = 0; row < height; ++row) {
+        for (int32_t col = 0; col < width; ++col) {
+            uint8_t value = tetrino_get(tetrino, row, col, piece->rotation);
+            if (value > 0) {
+                int32_t board_row = piece->offset_row + row;
+                int32_t board_col = piece->offset_col + col;
+                if (board_row < 0) {
+                    return false;
+                }
+                if (board_row >= height) {
+                    return false;
+                }
+                if (board_col < 0) {
+                    return false;
+                }
+                if (board_col >= width) {
+                    return false;
+                }
+                if (matrix_get(board, width, row, col)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+void update_game_play(game_state *game, const input_state *input) {
+    piece_state piece = game -> piece;
+    if (input -> dleft > 0) {
+        --piece.offset_col;
+    }
+    if (input -> dright > 0) {
+        ++piece.offset_col;
+    }
+    if (input -> dup > 0) {
+        piece.rotation = (piece.rotation + 1) % 4;
+    }
+    if (check_piece_valid(&piece, game -> board, WIDTH, HEIGHT)) {
+        --piece.offset_col;
+    }
 }
 
 int main() {
