@@ -181,8 +181,13 @@ int main() {
             }
         }
 
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+        SDL_RenderClear(renderer);
+
         update_game(&game, &input);
         render_game(&game, renderer);
+
+        SDL_RenderPresent(renderer);
     }
 
     SDL_DestroyRenderer(renderer);
