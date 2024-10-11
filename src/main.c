@@ -1,17 +1,19 @@
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_pixels.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_video.h>
 
 #define WIDTH 10
 #define HEIGHT 22
 #define VISIBLE_HEIGHT 20
 
-#define construct_tetromino(data, side) {data, side}
+#define CONSTRUCT_TETROMINO(data, side) {data, side}
 
 /*
  * Reprsents the shape of the tetromino
@@ -42,9 +44,9 @@ const uint8_t TETRINO_3[] = {
 };
 
 const tetromino TETRINOS[] = {
-    construct_tetromino(TETRINO_1, 4),
-    construct_tetromino(TETRINO_2, 2),
-    construct_tetromino(TETRINO_3, 3),
+    CONSTRUCT_TETROMINO(TETRINO_1, 4),
+    CONSTRUCT_TETROMINO(TETRINO_2, 2),
+    CONSTRUCT_TETROMINO(TETRINO_3, 3),
 };
 
 typedef enum {
