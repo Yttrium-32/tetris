@@ -40,21 +40,29 @@ const tetrino TETRINOS[] = {
     construct_tetrino(TETRINO_3, 3),
 };
 
+enum game_phase {
+    GAME_PHASE_PLAY
+};
+
 /*
  * Struct representing state of each tetrino
  * tetrino_index selects one of 8 tetrinos
  */
-struct piece_state {
+typedef struct {
     uint8_t tetrino_index;
     int32_t offset_row;
     int32_t offset_col;
     int32_t rotation;
-};
+} piece_state;
 
-struct game_state {
+typedef struct {
     uint8_t board[WIDTH * HEIGHT];
-    struct piece_state piece;
-};
+    piece_state piece;
+} game_state ;
+
+typedef struct {
+
+} input_state;
 
 uint8_t matrix_get(const uint8_t *values, uint8_t *test, int32_t width, int32_t row, int32_t col) {
     int32_t index = row * width + col;
