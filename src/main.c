@@ -1,3 +1,4 @@
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 #include <assert.h>
@@ -154,6 +155,10 @@ void update_game(game_state *game, const input_state *input) {
     }
 }
 
+void render_game(const game_state *game, SDL_Renderer *renderer) {
+
+}
+
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         return 1;
@@ -164,7 +169,24 @@ int main() {
             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
+    game_state game = {};
+    input_state input = {};
+
+    bool quit = false;
+    while (!quit) {
+        SDL_Event e;
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) {
+                    quit = true;
+            }
+        }
+
+        update_game(&game, &input);
+        render_game(&game, renderer);
+    }
+
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
+
     return 0;
 }
