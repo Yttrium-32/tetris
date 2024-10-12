@@ -1,3 +1,5 @@
+#include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_scancode.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -74,10 +76,13 @@ typedef struct {
 } GameState ;
 
 typedef struct {
+    uint8_t left;
+    uint8_t right;
+    uint8_t up;
+
     int8_t dleft;
     int8_t dright;
     int8_t dup;
-
 } InputState;
 
 uint8_t matrix_get(const uint8_t *values, int32_t width, int32_t row, int32_t col) {
@@ -109,8 +114,8 @@ bool check_piece_valid(const PieceState *piece, const uint8_t *board, int32_t wi
     const Tetromino *tetromino = &TETROMINOS[piece->tetromino_index];
     assert(tetromino);
 
-    for (int32_t row = 0; row < height; ++row) {
-        for (int32_t col = 0; col < width; ++col) {
+    for (int32_t row = 0; row < tetromino->side; ++row) {
+        for (int32_t col = 0; col < tetromino->side; ++col) {
             uint8_t value = tetromino_get(tetromino, row, col, piece->rotation);
             if (value > 0) {
                 int32_t board_row = piece->offset_row + row;
@@ -147,7 +152,8 @@ void update_game_play(GameState *game, const InputState *input) {
     if (input -> dup > 0) {
         piece.rotation = (piece.rotation + 1) % 4;
     }
-    if (check_piece_valid(&piece, game -> board, WIDTH, HEIGHT)) {
+    bool is_valid = check_piece_valid(&piece, game -> board, WIDTH, HEIGHT);
+    if (is_valid) {
         game->piece = piece;
     }
 }
@@ -227,6 +233,19 @@ int main() {
                     quit = true;
             }
         }
+
+        int32_t key_count;
+        const uint8_t *key_states = SDL_GetKeyboardState(&key_count);
+
+        InputState prev_input = input;
+
+        input.left = key_states[SDL_SCANCODE_LEFT];
+        input.right = key_states[SDL_SCANCODE_RIGHT];
+        input.up = key_states[SDL_SCANCODE_UP];
+
+        input.dleft = input.left - prev_input.left;
+        input.dright = input.right - prev_input.right;
+        input.dup = input.up - prev_input.up;
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
