@@ -208,7 +208,19 @@ void draw_piece(SDL_Renderer *renderer, const PieceState *piece, int32_t offset_
     }
 }
 
+void draw_board(SDL_Renderer *renderer, const uint8_t *board, int32_t width, int32_t height, int32_t offset_x, int32_t offset_y) {
+    for (int32_t row = 0; row < height; ++row) {
+        for (int32_t col = 0; col < width; ++col) {
+            uint8_t value = matrix_get(board, width, row, col);
+            if (value) {
+                draw_cell(renderer, row, col, value, offset_x, offset_y);
+            }
+        }
+    }
+}
+
 void render_game(const GameState *game, SDL_Renderer *renderer) {
+    draw_board(renderer, game -> board, WIDTH, HEIGHT, 0, 0);
     draw_piece(renderer, &game -> piece, 0, 0);
 }
 
@@ -224,6 +236,8 @@ int main() {
 
     GameState game = {};
     InputState input = {};
+
+    game.piece.tetromino_index = 2;
 
     bool quit = false;
     while (!quit) {
