@@ -185,8 +185,25 @@ void draw_cell(SDL_Renderer *renderer, int32_t row, int32_t col, uint8_t value, 
     fill_rect(renderer, x + edge, y + edge, GRID_SIZE - edge, GRID_SIZE - edge, base_color);
 }
 
-void render_game(const GameState *game, SDL_Renderer *renderer) {
+void draw_piece(SDL_Renderer *renderer, const PieceState *piece, int32_t offset_x, int32_t offset_y) {
+    const Tetromino *tetromino = TETROMINOS + piece -> tetromino_index;
+    for (int32_t row = 0; row < tetromino -> side; ++row) {
+        for (int32_t col = 0; col < tetromino -> side; ++col) {
+            uint8_t value = tetromino_get(tetromino, row, col, piece -> rotation);
+            if (value) {
+                draw_cell(renderer,
+                        row + piece -> offset_row,
+                        col + piece -> offset_col,
+                        value,
+                        offset_x,
+                        offset_y);
+            }
+        }
+    }
+}
 
+void render_game(const GameState *game, SDL_Renderer *renderer) {
+    draw_piece(renderer, &game -> piece, 0, 0);
 }
 
 int main() {
