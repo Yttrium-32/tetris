@@ -98,10 +98,12 @@ typedef struct {
     uint8_t left;
     uint8_t right;
     uint8_t up;
+    uint8_t down;
 
     int8_t dleft;
     int8_t dright;
     int8_t dup;
+    int8_t ddown;
 } InputState;
 
 uint8_t matrix_get(const uint8_t *values, int32_t width, int32_t row, int32_t col) {
@@ -215,6 +217,9 @@ void update_game_play(GameState *game, const InputState *input) {
     if (is_valid) {
         game->piece = piece;
     }
+    if (input->ddown > 0) {
+        soft_drop(game);
+    }
     while (game->time >= game->next_drop_time) {
         soft_drop(game);
     }
@@ -321,10 +326,12 @@ int main() {
         input.left = key_states[SDL_SCANCODE_LEFT];
         input.right = key_states[SDL_SCANCODE_RIGHT];
         input.up = key_states[SDL_SCANCODE_UP];
+        input.down = key_states[SDL_SCANCODE_DOWN];
 
         input.dleft = input.left - prev_input.left;
         input.dright = input.right - prev_input.right;
         input.dup = input.up - prev_input.up;
+        input.ddown = input.down - prev_input.down;
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
