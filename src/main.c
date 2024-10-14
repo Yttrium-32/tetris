@@ -12,6 +12,28 @@
 
 #define CONSTRUCT_TETROMINO(data, side) {data, side}
 
+const uint8_t FRAMES_PER_DROP[] = {
+    48,
+    43,
+    38,
+    33,
+    28,
+    23,
+    18,
+    13,
+    8,
+    6,
+    5, 5, 5,
+    4, 4, 4,
+    3, 3, 3,
+    2, 2, 2,
+    2, 2, 2,
+    2, 2, 2,
+    1
+};
+
+const float_t TARGET_SECONDS_PER_FRAME = 1.f / 60.f;
+
 /*
  * Reprsents the shape of the tetromino
  * Here, `data` is square matrix
@@ -65,6 +87,11 @@ typedef struct {
     uint8_t board[WIDTH * HEIGHT];
     PieceState piece;
     GamePhase phase;
+
+    int32_t level;
+
+    float_t next_drop_time;
+    float_t time;
 } GameState ;
 
 typedef struct {
@@ -124,13 +151,53 @@ bool check_piece_valid(const PieceState *piece, const uint8_t *board, int32_t wi
                 if (board_col >= width) {
                     return false;
                 }
-                if (matrix_get(board, width, row, col)) {
+                if (matrix_get(board, width, board_row, board_col)) {
                     return false;
                 }
             }
         }
     }
     return true;
+}
+
+void merge_piece(GameState *game) {
+    const Tetromino *tetromino = TETROMINOS + game->piece.tetromino_index;
+
+    for (int32_t row = 0; row < tetromino->side; row++) {
+        for (int32_t col = 0; col < tetromino->side; col++) {
+            uint8_t value = tetromino_get(tetromino, row, col, game->piece.rotation);
+            if (value) {
+                int32_t board_row = game->piece.offset_row + row;
+                int32_t board_col = game->piece.offset_col + col;
+                matrix_set(game->board, WIDTH, board_row, board_col, value);
+            }
+        }
+    }
+}
+
+float_t get_time_to_next_drop(int32_t level) {
+    if (level > 29)
+        level = 29;
+    return FRAMES_PER_DROP[level] * TARGET_SECONDS_PER_FRAME;
+}
+
+void spawn_piece(GameState *game) {
+    memset(&game->piece, 0, sizeof(PieceState));
+    game->piece.tetromino_index = 1;
+    game->piece.offset_col = WIDTH / 2;
+    game->next_drop_time = game->time + get_time_to_next_drop(game->level);
+}
+
+bool soft_drop(GameState *game) {
+    ++game->piece.offset_row;
+    bool is_valid = check_piece_valid(&game->piece, game->board, WIDTH, HEIGHT);
+    if (!is_valid) {
+        --game -> piece.offset_row;
+        merge_piece(game);
+        spawn_piece(game);
+    }
+    game->next_drop_time = game->time + get_time_to_next_drop(game->level);
+    return false;
 }
 
 void update_game_play(GameState *game, const InputState *input) {
@@ -148,6 +215,9 @@ void update_game_play(GameState *game, const InputState *input) {
     if (is_valid) {
         game->piece = piece;
     }
+    while (game->time >= game->next_drop_time) {
+        soft_drop(game);
+    }
 }
 
 void update_game(GameState *game, const InputState *input) {
@@ -159,7 +229,7 @@ void update_game(GameState *game, const InputState *input) {
 }
 
 void fill_rect(SDL_Renderer* renderer, int32_t x, int32_t y, int32_t width, int32_t height, Color color) {
-    SDL_Rect rect = {};
+    SDL_Rect rect = {0};
     rect.x = x;
     rect.y = y;
     rect.w = width;
@@ -229,10 +299,13 @@ int main() {
     GameState game = {};
     InputState input = {};
 
+    spawn_piece(&game);
     game.piece.tetromino_index = 2;
 
     bool quit = false;
     while (!quit) {
+        game.time = SDL_GetTicks() / 1000.0f;
+
         SDL_Event e;
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
