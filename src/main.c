@@ -291,9 +291,7 @@ void draw_board(SDL_Renderer *renderer, const uint8_t *board, int32_t width, int
     for (int32_t row = 0; row < height; ++row) {
         for (int32_t col = 0; col < width; ++col) {
             uint8_t value = matrix_get(board, width, row, col);
-            if (value) {
-                draw_cell(renderer, row, col, value, offset_x, offset_y);
-            }
+            draw_cell(renderer, row, col, value, offset_x, offset_y);
         }
     }
 }
