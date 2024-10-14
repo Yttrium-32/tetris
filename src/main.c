@@ -1,15 +1,7 @@
-#include <SDL2/SDL_keyboard.h>
-#include <SDL2/SDL_scancode.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <stdint.h>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
 
 #include "color.h"
 
