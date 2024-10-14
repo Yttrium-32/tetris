@@ -1,3 +1,4 @@
+#include <SDL2/SDL_scancode.h>
 #include <assert.h>
 #include <stdbool.h>
 
@@ -99,11 +100,13 @@ typedef struct {
     uint8_t right;
     uint8_t up;
     uint8_t down;
+    uint8_t a;
 
     int8_t dleft;
     int8_t dright;
     int8_t dup;
     int8_t ddown;
+    int8_t da;
 } InputState;
 
 uint8_t matrix_get(const uint8_t *values, int32_t width, int32_t row, int32_t col) {
@@ -197,9 +200,10 @@ bool soft_drop(GameState *game) {
         --game -> piece.offset_row;
         merge_piece(game);
         spawn_piece(game);
+        return false;
     }
     game->next_drop_time = game->time + get_time_to_next_drop(game->level);
-    return false;
+    return true;
 }
 
 void update_game_play(GameState *game, const InputState *input) {
@@ -207,19 +211,27 @@ void update_game_play(GameState *game, const InputState *input) {
     if (input -> dleft > 0) {
         --piece.offset_col;
     }
+
     if (input -> dright > 0) {
         ++piece.offset_col;
     }
+
     if (input -> dup > 0) {
         piece.rotation = (piece.rotation + 1) % 4;
     }
+
     bool is_valid = check_piece_valid(&piece, game -> board, WIDTH, HEIGHT);
     if (is_valid) {
         game->piece = piece;
     }
+
     if (input->ddown > 0) {
         soft_drop(game);
     }
+
+    if (input->da > 0)
+        while(soft_drop(game));
+
     while (game->time >= game->next_drop_time) {
         soft_drop(game);
     }
@@ -327,11 +339,13 @@ int main() {
         input.right = key_states[SDL_SCANCODE_RIGHT];
         input.up = key_states[SDL_SCANCODE_UP];
         input.down = key_states[SDL_SCANCODE_DOWN];
+        input.a = key_states[SDL_SCANCODE_SPACE];
 
         input.dleft = input.left - prev_input.left;
         input.dright = input.right - prev_input.right;
         input.dup = input.up - prev_input.up;
         input.ddown = input.down - prev_input.down;
+        input.da = input.a - prev_input.a;
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
