@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include <SDL2/SDL.h>
+#include <stdint.h>
 
 #include "color.h"
 
@@ -233,7 +234,7 @@ float_t get_time_to_next_drop(int32_t level) {
 
 void spawn_piece(GameState *game) {
     memset(&game->piece, 0, sizeof(PieceState));
-    game->piece.tetromino_index = 1;
+    game->piece.tetromino_index = 0;
     game->piece.offset_col = WIDTH / 2;
     game->next_drop_time = game->time + get_time_to_next_drop(game->level);
 }
@@ -397,8 +398,19 @@ void draw_board(SDL_Renderer *renderer, const uint8_t *board, int32_t width, int
 }
 
 void render_game(const GameState *game, SDL_Renderer *renderer) {
+    Color highlight_color = color(0xFF, 0xFF, 0xFF, 0xFF);
     draw_board(renderer, game -> board, WIDTH, HEIGHT, 0, 0);
     draw_piece(renderer, &game -> piece, 0, 0);
+
+    if (game->phase == GAME_PHASE_LINE) {
+        for (int32_t row = 0; row < HEIGHT; ++row) {
+            if (game->lines[row]) {
+                int32_t x = 0;
+                int32_t y = row * GRID_SIZE;
+                fill_rect(renderer, x, y, WIDTH * GRID_SIZE, GRID_SIZE, highlight_color);
+            }
+        }
+    }
 }
 
 int main() {
