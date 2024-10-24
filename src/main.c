@@ -1,4 +1,3 @@
-#include <SDL2/SDL_scancode.h>
 #include <assert.h>
 #include <stdbool.h>
 
@@ -12,6 +11,9 @@
 #define GRID_SIZE 30
 
 #define CONSTRUCT_TETROMINO(data, side) {data, side}
+
+#define min(a, b) a < b ? a : b
+#define max(a, b) a > b ? a : b
 
 const uint8_t FRAMES_PER_DROP[] = {
     48,
@@ -70,7 +72,8 @@ const Tetromino TETROMINOS[] = {
 };
 
 typedef enum {
-    GAME_PHASE_PLAY
+    GAME_PHASE_PLAY,
+    GAME_PHASE_LINE,
 } GamePhase;
 
 /*
@@ -86,11 +89,17 @@ typedef struct {
 
 typedef struct {
     uint8_t board[WIDTH * HEIGHT];
+    uint8_t lines[HEIGHT];
     PieceState piece;
     GamePhase phase;
 
     int32_t level;
+    int32_t start_level;
+    int32_t pending_line_count;
+    int32_t line_count;
+    int32_t points;
 
+    float_t highlight_end_time;
     float_t next_drop_time;
     float_t time;
 } GameState ;
@@ -132,6 +141,42 @@ uint8_t tetromino_get(const Tetromino *tetromino, int32_t row, int32_t col, int3
             return tetromino -> data[col * side + (side - row - 1)];
     }
     return 0;
+}
+
+uint8_t check_row_filled(const uint8_t *values, int32_t width, int32_t row) {
+    for (int32_t col = 0; col < width; ++col) {
+        if (!matrix_get(values, width, row, col)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int32_t find_lines(const uint8_t *values, int32_t width, int32_t height, uint8_t *lines_out) {
+    int32_t count = 0;
+    for (int32_t row = 0; row < height; row++) {
+        uint8_t filled = check_row_filled(values, width, row);
+        lines_out[row] = filled;
+        count += filled;
+    }
+    return count;
+}
+
+void clear_lines(uint8_t *values, int32_t width, int32_t height, const uint8_t *lines) {
+    int32_t src_row = height - 1;
+    for (int32_t dst_row = height - 1; dst_row >= 0; --dst_row) {
+        while (src_row > 0 && lines[src_row]) {
+            --src_row;
+        }
+        if (src_row < 0) {
+            memset(values + dst_row * width, 0, width);
+        } else {
+            memcpy(values + dst_row * width,
+                   values + src_row * width,
+                    width);
+            --src_row;
+        }
+    }
 }
 
 bool check_piece_valid(const PieceState *piece, const uint8_t *board, int32_t width, int32_t height) {
@@ -206,6 +251,52 @@ bool soft_drop(GameState *game) {
     return true;
 }
 
+int32_t compute_points(int32_t level, int32_t line_count) {
+    switch (line_count) {
+        case 1:
+            return 40 * (level + 1);
+        case 2:
+            return 100 * (level + 1);
+        case 3:
+            return 300 * (level + 1);
+        case 4:
+            return 1200 * (level + 1);
+    }
+    return 0;
+}
+
+int32_t get_lines_for_next_level(int32_t start_level, int32_t level) {
+    int32_t first_level_up_limit = min(
+            (start_level * 10 + 10),
+            max(100, (start_level * 10 - 50))
+    );
+    if (level == start_level) {
+        return first_level_up_limit;
+    }
+
+    int32_t diff = level - start_level;
+    return first_level_up_limit + diff * 10;
+}
+
+void update_game_line(GameState *game) {
+    if (game->time >= game->highlight_end_time) {
+        clear_lines(game->board, WIDTH, HEIGHT, game->lines);
+        game->line_count += game->pending_line_count;
+        game->points += compute_points(game->level, game->pending_line_count);
+
+        int32_t lines_for_next_level = get_lines_for_next_level(
+                game->start_level,
+                game->level
+        );
+
+        if (game->line_count >= lines_for_next_level) {
+            ++game->level;
+        }
+
+        game->phase = GAME_PHASE_PLAY;
+    }
+}
+
 void update_game_play(GameState *game, const InputState *input) {
     PieceState piece = game -> piece;
     if (input -> dleft > 0) {
@@ -235,12 +326,21 @@ void update_game_play(GameState *game, const InputState *input) {
     while (game->time >= game->next_drop_time) {
         soft_drop(game);
     }
+
+    game->pending_line_count = find_lines(game->board, WIDTH, HEIGHT, game->lines);
+    if (game->pending_line_count > 0) {
+        game->phase = GAME_PHASE_LINE;
+        game->highlight_end_time = game-> time + 0.5f;
+    }
 }
 
 void update_game(GameState *game, const InputState *input) {
     switch (game->phase) {
         case GAME_PHASE_PLAY:
             return update_game_play(game, input);
+            break;
+        case GAME_PHASE_LINE:
+            update_game_line(game);
             break;
     }
 }
