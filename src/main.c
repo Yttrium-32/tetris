@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include <SDL2/SDL.h>
-#include <stdint.h>
 
 #include "color.h"
 
@@ -10,8 +10,6 @@
 #define HEIGHT 22
 #define VISIBLE_HEIGHT 20
 #define GRID_SIZE 30
-
-#define CONSTRUCT_TETROMINO(data, side) {data, side}
 
 #define min(a, b) a < b ? a : b
 #define max(a, b) a > b ? a : b
@@ -66,10 +64,38 @@ const uint8_t TETROMINO_3[] = {
     0, 3, 0
 };
 
+const uint8_t TETROMINO_4[] = {
+    0, 4, 4,
+    4, 4, 0,
+    0, 0, 0
+};
+
+const uint8_t TETROMINO_5[] = {
+    5, 5, 0,
+    0, 5, 5,
+    0, 0, 0
+};
+
+const uint8_t TETROMINO_6[] = {
+    6, 0, 0,
+    6, 6, 6,
+    0, 0, 0
+};
+
+const uint8_t TETROMINO_7[] = {
+    0, 0, 7,
+    7, 7, 7,
+    0, 0, 0
+};
+
 const Tetromino TETROMINOS[] = {
-    CONSTRUCT_TETROMINO(TETROMINO_1, 4),
-    CONSTRUCT_TETROMINO(TETROMINO_2, 2),
-    CONSTRUCT_TETROMINO(TETROMINO_3, 3),
+    {TETROMINO_1, 4},
+    {TETROMINO_2, 2},
+    {TETROMINO_3, 3},
+    {TETROMINO_4, 3},
+    {TETROMINO_5, 3},
+    {TETROMINO_6, 3},
+    {TETROMINO_7, 3},
 };
 
 typedef enum {
@@ -232,9 +258,14 @@ float_t get_time_to_next_drop(int32_t level) {
     return FRAMES_PER_DROP[level] * TARGET_SECONDS_PER_FRAME;
 }
 
+uint8_t get_random_tetromino() {
+    srand((unsigned) time(NULL));
+    return rand() % 7;
+}
+
 void spawn_piece(GameState *game) {
     memset(&game->piece, 0, sizeof(PieceState));
-    game->piece.tetromino_index = 0;
+    game->piece.tetromino_index = get_random_tetromino();
     game->piece.offset_col = WIDTH / 2;
     game->next_drop_time = game->time + get_time_to_next_drop(game->level);
 }
