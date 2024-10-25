@@ -1,8 +1,10 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <time.h>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #include "color.h"
 
@@ -11,8 +13,16 @@
 #define VISIBLE_HEIGHT 20
 #define GRID_SIZE 30
 
+#define FONT_NAME "PixeloidMono.ttf"
+
 #define min(a, b) a < b ? a : b
 #define max(a, b) a > b ? a : b
+
+typedef enum {
+    TEXT_ALIGN_LEFT,
+    TEXT_ALIGNT_CENTER,
+    TEXT_ALIGN_RIGHT
+} TextAlign;
 
 const uint8_t FRAMES_PER_DROP[] = {
     48,
@@ -101,6 +111,7 @@ const Tetromino TETROMINOS[] = {
 typedef enum {
     GAME_PHASE_PLAY,
     GAME_PHASE_LINE,
+    GAME_PHASE_OVER,
 } GamePhase;
 
 /*
@@ -168,6 +179,15 @@ uint8_t tetromino_get(const Tetromino *tetromino, int32_t row, int32_t col, int3
             return tetromino -> data[col * side + (side - row - 1)];
     }
     return 0;
+}
+
+uint8_t check_row_empty(const uint8_t *values, int32_t width, int32_t row) {
+    for (int32_t col = 0; col < width; ++col) {
+        if (matrix_get(values, width, row, col)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 uint8_t check_row_filled(const uint8_t *values, int32_t width, int32_t row) {
@@ -364,6 +384,11 @@ void update_game_play(GameState *game, const InputState *input) {
         game->phase = GAME_PHASE_LINE;
         game->highlight_end_time = game-> time + 0.5f;
     }
+
+    int32_t game_over_row = 0;
+    if (!check_row_empty(game->board, WIDTH, game_over_row)) {
+        game->phase = GAME_PHASE_OVER;
+    }
 }
 
 void update_game(GameState *game, const InputState *input) {
@@ -385,6 +410,32 @@ void fill_rect(SDL_Renderer* renderer, int32_t x, int32_t y, int32_t width, int3
     rect.h = height;
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderer, &rect);
+}
+
+void draw_string(SDL_Renderer *renderer, TTF_Font *font, const char *text, int32_t x, int32_t y, TextAlign alignment, Color color) {
+    SDL_Color sdl_color = {color.r, color.g, color.b, color.a};
+    SDL_Surface *surface = TTF_RenderText_Solid(font, text, sdl_color);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+    SDL_Rect rect;
+    rect.y = y;
+    rect.w = surface->w;
+    rect.h = surface->h;
+    switch (alignment) {
+        case TEXT_ALIGN_LEFT:
+            rect.x = x;
+            break;
+        case TEXT_ALIGN_RIGHT:
+            rect.x = x - surface->w;
+            break;
+        case TEXT_ALIGNT_CENTER:
+            rect.x = x - surface->w / 2;
+            break;
+    }
+
+    SDL_RenderCopy(renderer, texture, 0, &rect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
 }
 
 void draw_cell(SDL_Renderer *renderer, int32_t row, int32_t col, uint8_t value, int32_t offset_x, int32_t offset_y) {
@@ -428,7 +479,7 @@ void draw_board(SDL_Renderer *renderer, const uint8_t *board, int32_t width, int
     }
 }
 
-void render_game(const GameState *game, SDL_Renderer *renderer) {
+void render_game(const GameState *game, SDL_Renderer *renderer, TTF_Font *font) {
     Color highlight_color = color(0xFF, 0xFF, 0xFF, 0xFF);
     draw_board(renderer, game -> board, WIDTH, HEIGHT, 0, 0);
     draw_piece(renderer, &game -> piece, 0, 0);
@@ -441,18 +492,35 @@ void render_game(const GameState *game, SDL_Renderer *renderer) {
                 fill_rect(renderer, x, y, WIDTH * GRID_SIZE, GRID_SIZE, highlight_color);
             }
         }
+    } else if (game->phase == GAME_PHASE_OVER) {
+        ;
     }
+
+    draw_string(renderer, font, "Tetris", 0, 0, TEXT_ALIGN_LEFT, highlight_color);
 }
 
 int main() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf("SDL_Init: %s\n", SDL_GetError());
         return 1;
     }
+
+    if (TTF_Init() < 0) {
+        printf("TTF_Init: %s\n", TTF_GetError());
+        return 2;
+    }
+
     SDL_Window *window = SDL_CreateWindow("Tetris",
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
             400, 720,
             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    TTF_Font *font = TTF_OpenFont(FONT_NAME, 45);
+    if (!font) {
+        printf("TTF_OpenFont: %s\n", TTF_GetError());
+        return 3;
+    }
 
     GameState game = {};
     InputState input = {};
@@ -492,11 +560,12 @@ int main() {
         SDL_RenderClear(renderer);
 
         update_game(&game, &input);
-        render_game(&game, renderer);
+        render_game(&game, renderer, font);
 
         SDL_RenderPresent(renderer);
     }
 
+    TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
 
