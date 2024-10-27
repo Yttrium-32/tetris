@@ -1,3 +1,4 @@
 *.o
 *.dmp
 .cache
+compile_commands.json
