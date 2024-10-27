@@ -20,3 +20,21 @@ For example on Arch linux:
 
 To compile and run simple run `make` in the project root.
 
+
+## Controls
+
+<div align="center">
+
+| Keys | Action |
+| :--- | :--- |
+| <kbd>Space</kbd> | Start Game |
+| <kbd>Space</kbd> | Hard Drop |
+| <kbd>↓</kbd> | Soft Drop |
+| <kbd>←</kbd> | Move Piece Left |
+| <kbd>→</kbd> | Move Piece Right |
+| <kbd>↑</kbd> | Rotate Piece |
+| <kbd>r</kbd> | Restart |
+| <kbd>Esc</kbd> | Exit |
+
+</div>
+
