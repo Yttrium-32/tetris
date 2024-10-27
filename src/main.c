@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <time.h>
 
 #include <SDL2/SDL.h>
@@ -109,6 +108,7 @@ const Tetromino TETROMINOS[] = {
 };
 
 typedef enum {
+    GAME_PHASE_START,
     GAME_PHASE_PLAY,
     GAME_PHASE_LINE,
     GAME_PHASE_OVER,
@@ -330,6 +330,30 @@ int32_t get_lines_for_next_level(int32_t start_level, int32_t level) {
     return first_level_up_limit + diff * 10;
 }
 
+void update_game_start(GameState *game, const InputState *input) {
+    if (input->dup)
+        ++game->start_level;
+
+    if (input->ddown && game->start_level > 0)
+        --game->start_level;
+
+    if (input->da) {
+        memset(game->board, 0, WIDTH * HEIGHT);
+        game->level = game->start_level;
+        game->line_count = 0;
+        game->points = 0;
+        game->next_drop_time = game->time + get_time_to_next_drop(game->level);
+        spawn_piece(game);
+        game->phase = GAME_PHASE_PLAY;
+    }
+}
+
+void update_game_over(GameState *game, const InputState *input) {
+    if (input->da) {
+        game->phase = GAME_PHASE_START;
+    }
+}
+
 void update_game_line(GameState *game) {
     if (game->time >= game->highlight_end_time) {
         clear_lines(game->board, WIDTH, HEIGHT, game->lines);
@@ -398,6 +422,12 @@ void update_game(GameState *game, const InputState *input) {
             break;
         case GAME_PHASE_LINE:
             update_game_line(game);
+            break;
+        case GAME_PHASE_START:
+            update_game_start(game, input);
+            break;
+        case GAME_PHASE_OVER:
+            update_game_over(game, input);
             break;
     }
 }
