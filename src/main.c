@@ -572,6 +572,14 @@ int main() {
         int32_t key_count;
         const uint8_t *key_states = SDL_GetKeyboardState(&key_count);
 
+        if (key_states[SDL_SCANCODE_ESCAPE]) {
+            quit = true;
+        }
+
+        if (key_states[SDL_SCANCODE_R]) {
+            game.phase = GAME_PHASE_START;
+        }
+
         InputState prev_input = input;
 
         input.left = key_states[SDL_SCANCODE_LEFT];
