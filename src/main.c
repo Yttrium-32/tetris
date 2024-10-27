@@ -512,9 +512,10 @@ void draw_board(SDL_Renderer *renderer, const uint8_t *board, int32_t width, int
 void render_game(const GameState *game, SDL_Renderer *renderer, TTF_Font *font) {
     Color highlight_color = color(0xFF, 0xFF, 0xFF, 0xFF);
     draw_board(renderer, game -> board, WIDTH, HEIGHT, 0, 0);
-    draw_piece(renderer, &game -> piece, 0, 0);
 
-    if (game->phase == GAME_PHASE_LINE) {
+    if (game->phase == GAME_PHASE_PLAY) {
+        draw_piece(renderer, &game -> piece, 0, 0);
+    } else if (game->phase == GAME_PHASE_LINE) {
         for (int32_t row = 0; row < HEIGHT; ++row) {
             if (game->lines[row]) {
                 int32_t x = 0;
@@ -523,7 +524,9 @@ void render_game(const GameState *game, SDL_Renderer *renderer, TTF_Font *font) 
             }
         }
     } else if (game->phase == GAME_PHASE_OVER) {
-        ;
+        int32_t x = WIDTH * GRID_SIZE / 2;
+        int32_t y = HEIGHT * GRID_SIZE / 2;
+        draw_string(renderer, font, "GAME OVER", x, y, TEXT_ALIGNT_CENTER, highlight_color);
     }
 
     draw_string(renderer, font, "Tetris", 0, 0, TEXT_ALIGN_LEFT, highlight_color);
@@ -554,9 +557,6 @@ int main() {
 
     GameState game = {};
     InputState input = {};
-
-    spawn_piece(&game);
-    game.piece.tetromino_index = 2;
 
     bool quit = false;
     while (!quit) {
