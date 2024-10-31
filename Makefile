@@ -1,13 +1,37 @@
-all: main run
-debug: main-debug run
+SRC_DIR := src
+BUILD_DIR := build
+OBJ_DIR := $(BUILD_DIR)/obj
 
-main-debug:
-	bear -- gcc -l SDL2_ttf -O0 -g -o main.o ./src/main.c `sdl2-config --cflags --libs`
-main: ./src/main.c
-	bear -- gcc -o main.o ./src/main.c `sdl2-config --cflags --libs` -l SDL2_ttf
-run: main.o
-	./main.o
+TARGET := $(BUILD_DIR)/tetris
+SRC := $(wildcard $(SRC_DIR)/*.c)
+OBJ := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
+
+CFLAGS := -Wall -Wextra -l SDL2_ttf `sdl2-config --cflags --libs`
+
+.PHONY: run all clean cache
+
+all: $(TARGET)
+
+run: all
+	./$(TARGET)
+
+$(TARGET): $(OBJ) | $(BUILD_DIR)
+	@echo "Building target..."
+	$(CC) $(CFLAGS) $^ -o $@
+	@echo "Successfully build target at $(TARGET)"
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR) $(OBJ_DIR):
+	mkdir -p $@
+
 clean:
-	rm main.o
-	rm compile_commands.json
-	rm core.dmp
+	$(RM) -rv $(BUILD_DIR) $(OBJ_DIR)
+	
+cache: clean
+	@echo "Generating compilation cache..."
+	bear -- make all
+	@echo "Compilation cache generated successfully!"
+
+
