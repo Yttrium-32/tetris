@@ -6,16 +6,16 @@
 #include <SDL2/SDL_ttf.h>
 
 #include "color.h"
+#include "utils.h"
 
 #define WIDTH 10
 #define HEIGHT 22
 #define VISIBLE_HEIGHT 20
 #define GRID_SIZE 30
 
-#define FONT_NAME "PixeloidMono.ttf"
+const float_t TARGET_SECONDS_PER_FRAME = 1.f / 60.f;
 
-#define min(a, b) a < b ? a : b
-#define max(a, b) a > b ? a : b
+#define FONT_NAME "PixeloidMono.ttf"
 
 typedef enum {
     TEXT_ALIGN_LEFT,
@@ -42,8 +42,6 @@ const uint8_t FRAMES_PER_DROP[] = {
     2, 2, 2,
     1
 };
-
-const float_t TARGET_SECONDS_PER_FRAME = 1.f / 60.f;
 
 /*
  * Reprsents the shape of the tetromino
@@ -140,7 +138,7 @@ typedef struct {
     float_t highlight_end_time;
     float_t next_drop_time;
     float_t time;
-} GameState ;
+} GameState;
 
 typedef struct {
     uint8_t left;
@@ -155,16 +153,6 @@ typedef struct {
     int8_t ddown;
     int8_t da;
 } InputState;
-
-uint8_t matrix_get(const uint8_t *values, int32_t width, int32_t row, int32_t col) {
-    int32_t index = row * width + col;
-    return values[index];
-}
-
-void matrix_set(uint8_t *values, int32_t width, int32_t row, int32_t col, uint8_t value) {
-    int32_t index = row * width + col;
-    values[index] = value;
-}
 
 uint8_t tetromino_get(const Tetromino *tetromino, int32_t row, int32_t col, int32_t rotation) {
     int32_t side = tetromino -> side;
